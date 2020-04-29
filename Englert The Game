@@ -1,0 +1,194 @@
+import pygame
+import random
+import math
+from pygame import mixer
+
+pygame.init()
+clock = pygame.time.Clock()
+
+
+screen = pygame.display.set_mode((800, 600))    #ablak és méretei
+background = pygame.image.load('jobbhatter.game.png')
+mixer.music.load('zene.hatter.mp3')
+mixer.music.play(-1)
+
+
+pygame.display.set_caption('Englert The Game [By.: Drakula, Titná] ©2020 - V0.1a')
+icon = pygame.image.load('ikon.jpg')
+pygame.display.set_icon(icon)
+
+#Englert
+playerImg = pygame.image.load('Englert.charachter.png')
+playerX = 265
+playerY = 375
+playerX_change = 0
+playerY_change = 0
+
+#Enemy_peti
+peti_jar = mixer.Sound('peti_lep.wav')
+peti_jar.play(-1)
+enemyImg = []
+enemyX = []
+enemyY = []
+enemyX_change = []
+enemyY_change = []
+
+num_of_enemies = 2
+
+for i in range(num_of_enemies):
+    enemyImg.append(pygame.image.load('Peti.character.png'))
+    enemyX.append(random.randint(-50, 605))
+    enemyY.append(random.randint(-62, 350))
+    enemyX_change.append(3)
+    enemyY_change.append(3)
+
+#weapon_uveg
+uvegImg = pygame.image.load('uveg.weapon.png')
+uvegX = 0
+uvegY = 375
+uvegX_change = 0
+uvegY_change = 10
+uveg_state = 'ready'
+
+score_value = 0
+font = pygame.font.Font('ConnectionIi-2wj8.otf', 32)
+textX = 10
+textY = 10
+
+
+over_font = pygame.font.Font('ConnectionIi-2wj8.otf', 50)
+textX2 = 10
+textY2 = 10
+
+def show_score(x, y):
+    score = font.render('Hulye kolok :' + str(score_value), True, (225, 225, 225))
+    screen.blit(score, (x, y))
+
+def game_over_text(x, y):
+    over_text = font.render('GAME OVER!', True, (225, 225, 225))
+    screen.blit(over_text, (200, 250))
+
+
+def player(x, y):
+    screen.blit(playerImg, (x, y))
+
+def enemy(x, y, i):
+    screen.blit(enemyImg[i], (x, y))
+
+def fire_uveg(x, y):
+    global uveg_state
+    uveg_state = 'fire'
+    screen.blit(uvegImg, (x+60, y+90))
+
+def isCollision(enemyX, enemyY, uvegX, uvegY):
+    distance = math.sqrt((math.pow(enemyX - uvegX, 2))+ (math.pow(enemyY - uvegY,2)))
+    if distance < 70:
+        return True
+    else:
+        return False
+
+
+#...amíg ki nem X-elem...
+runing = True
+while runing:
+    screen.blit(background, (0, 0))
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            runing = False
+
+#mozgás_X koordináta //bal és jobb//
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_LEFT:
+                englert_jar = mixer.Sound('ervl.wav')
+                englert_jar.play(1)
+                playerX_change = -7
+            if event.key == pygame.K_RIGHT:
+                englert_jar = mixer.Sound('ervl.wav')
+                englert_jar.play(1)
+                playerX_change = 7
+            if event.key == pygame.K_SPACE:
+                if uveg_state is 'ready':
+                    uveg_sound = mixer.Sound('uveg_repul.wav')
+                    uveg_sound.play()
+                    uvegX = playerX
+                    uvegY = playerY
+                    fire_uveg(playerX, uvegY)
+        if event.type == pygame.KEYUP:
+            if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
+                playerX_change = 0
+
+
+#mozgás_Y koordináta //fel és le/
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_DOWN:
+                englert_jar = mixer.Sound('ervl.wav')
+                englert_jar.play(1)
+                playerY_change = 7
+            if event.key == pygame.K_UP:
+                englert_jar = mixer.Sound('ervl.wav')
+                englert_jar.play(1)
+                playerY_change = -7
+        if event.type == pygame.KEYUP:
+            if event.key == pygame.K_DOWN or event.key == pygame.K_UP:
+                playerY_change = 0
+
+
+    playerY += playerY_change
+    playerX += playerX_change
+
+#határok
+    if playerX <= -65:
+        playerX = -65
+    elif playerX >= 625:
+        playerX = 625
+
+    if playerY <= -60:
+        playerY = -60
+    elif playerY >= 375:
+        playerY = 375
+
+    enemyY += enemyY_change
+
+# Enemy_1 //Peti - mozog//
+    for i in range(num_of_enemies):
+        if enemyX and enemyY == playerX and playerY:
+            for j in range(num_of_enemies):
+                enemy[j] = 2000
+            game_over_text
+            break
+        enemyX[i] += enemyX_change[i]
+        if enemyX[i] <= -50:
+            enemyX_change[i] = 3
+        elif enemyX[i] >= 605:
+            enemyX_change[i] = -3
+
+        enemyY[i] += enemyY_change[i]
+        if enemyY[i] <= -62:
+            enemyY_change[i] = 3
+        elif enemyY[i] >= 350:
+            enemyY_change[i] = -3
+
+# Collision
+        collision = isCollision(enemyX[i], enemyY[i], uvegX, uvegY)
+        if collision:
+            peti_hurt = mixer.Sound('hurt1.wav')
+            peti_hurt.play()
+            uvegY = 375
+            uveg_state = 'ready'
+            score_value += 1
+            enemyX[i] = random.randint(-50, 605)
+            enemyY[i] = random.randint(-62, 350)
+
+        enemy(enemyX[i], enemyY[i], i)
+
+#uveg_mozog
+    if uvegY <= -150:
+        uvegY = 375
+        uveg_state = 'ready'
+    if uveg_state is 'fire':
+        fire_uveg(uvegX, uvegY)
+        uvegY -= uvegY_change
+
+    show_score(textX, textY)
+    player(playerX, playerY)
+    pygame.display.update()
